@@ -1,0 +1,44 @@
+# Example TaskPilot configuration.
+# Run with:  taskpilot list -c examples/tasks.yaml
+
+tasks:
+  - name: heartbeat
+    description: "A simple log entry every 5 minutes to prove the loop works."
+    schedule: "*/5 * * * *"
+    action: log
+    params:
+      message: "TaskPilot is alive"
+
+  - name: workday-greeting
+    description: "Print a greeting on weekday mornings at 09:00."
+    schedule: "0 9 * * 1-5"
+    action: shell
+    params:
+      command: "echo 'Good morning! Time to automate.'"
+
+  - name: nightly-backup
+    description: "Archive the data directory every night at midnight."
+    schedule: "@daily"
+    enabled: false
+    action: shell
+    params:
+      command: "tar czf /tmp/backup-$(date +%F).tgz ./data"
+
+  - name: health-check
+    description: "Ping a service hourly and record the HTTP status."
+    schedule: "@hourly"
+    enabled: false
+    action: http
+    params:
+      url: "https://example.com/health"
+      method: GET
+
+  - name: notify-webhook
+    description: "Send a heartbeat payload to a webhook (e.g. Slack/Telegram)."
+    schedule: "0 */6 * * *"
+    enabled: false
+    action: webhook
+    params:
+      url: "https://example.com/webhook"
+      payload:
+        text: "Scheduled check-in from TaskPilot"
