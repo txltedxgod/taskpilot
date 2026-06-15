@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TaskPilot — Flight Deck</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  :root {
+    --bg: #070b09;
+    --bg-grid: #0d1410;
+    --panel: #101a14;
+    --panel-2: #0c1410;
+    --border: #233329;
+    --border-soft: #1a2a20;
+    --green: #3dffa3;
+    --green-dim: #1f5c41;
+    --amber: #ffb238;
+    --amber-dim: #6b4d1a;
+    --red: #ff5c6a;
+    --blue: #5cc8ff;
+    --purple: #c79bff;
+    --text: #d3ecdf;
+    --text-dim: #6f8a7a;
+    --text-faint: #44594c;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Oswald', sans-serif;
+    --body: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100%;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(61,255,163,0.05), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(61,255,163,0.025) 0px, rgba(61,255,163,0.025) 1px, transparent 1px, transparent 28px),
+      repeating-linear-gradient(90deg, rgba(61,255,163,0.025) 0px, rgba(61,255,163,0.025) 1px, transparent 1px, transparent 28px);
+    background-attachment: fixed;
+  }
+
+  .app {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 20px 60px;
+  }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 18px 22px;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px rgba(61,255,163,0.04), 0 12px 30px -20px rgba(61,255,163,0.5);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-icon {
+    font-size: 28px;
+    filter: drop-shadow(0 0 8px rgba(61,255,163,0.55));
+    transform: rotate(-8deg);
+  }
+
+  .brand-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-shadow: 0 0 12px rgba(61,255,163,0.35);
+  }
+
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .status-cluster {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+
+  .status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .status-label {
+    font-family: var(--display);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: var(--text-faint);
+  }
+
+  .status-value {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-ok { color: var(--green); }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* ---------- GRID ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .card {
+    background: linear-gradient(165deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card[data-enabled="true"] {
+    border-color: var(--border);
+    box-shadow: inset 0 0 0 1px rgba(61,255,163,0.03);
+  }
+
+  .card[data-enabled="false"] {
+    opacity: 0.62;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px transparent;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+
+  .led[data-state="enabled"] {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  .led[data-state="disabled"] {
+    background: var(--amber-dim);
+  }
+
+  .led[data-state="armed"] {
+    background: var(--green);
+    box-shadow: 0 0 12px var(--green);
+    animation: pulse 0.6s ease-in-out infinite;
+  }
+
+  .card-title {
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 0;
+    flex: 1;
+    color: var(--text);
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+  }
+
+  .chip-log    { color: var(--green); background: rgba(61,255,163,0.08); }
+  .chip-shell  { color: var(--amber); background: rgba(255,178,56,0.08); }
+  .chip-http   { color: var(--blue);  background: rgba(92,200,255,0.08); }
+  .chip-webhook{ color: var(--purple);background: rgba(199,155,255,0.08); }
+
+  .card-desc {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin: -6px 0 0;
+  }
+
+  .card-body {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  /* ---------- DIAL ---------- */
+  .dial-wrap {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    flex-shrink: 0;
+  }
+
+  .dial {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .dial-track {
+    fill: none;
+    stroke: var(--border-soft);
+    stroke-width: 6;
+  }
+
+  .dial-progress {
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+    filter: drop-shadow(0 0 4px rgba(61,255,163,0.6));
+  }
+
+  .card[data-enabled="false"] .dial-progress {
+    stroke: var(--amber-dim);
+    filter: none;
+  }
+
+  .dial-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .dial-time {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .dial-label {
+    font-family: var(--display);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+
+  .card[data-enabled="false"] .dial-time { color: var(--text-faint); font-size: 12px; }
+
+  /* ---------- META ---------- */
+  .card-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11.5px;
+  }
+
+  .meta-key {
+    font-family: var(--display);
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+
+  .meta-val {
+    color: var(--text);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mono { font-family: var(--mono); }
+
+  /* ---------- ACTIONS ---------- */
+  .card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 12px;
+  }
+
+  .btn-run {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    color: var(--green);
+    background: rgba(61,255,163,0.06);
+    border: 1px solid var(--green-dim);
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-run:hover {
+    background: rgba(61,255,163,0.15);
+    border-color: var(--green);
+    box-shadow: 0 0 12px rgba(61,255,163,0.25);
+  }
+
+  .btn-run:active { transform: translateY(1px); }
+
+  .btn-run.running {
+    color: var(--bg);
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .switch {
+    position: relative;
+    width: 42px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.25s ease;
+  }
+
+  .slider::before {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 2px;
+    top: 2px;
+    background: var(--text-faint);
+    border-radius: 50%;
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+
+  .switch input:checked + .slider {
+    background: rgba(61,255,163,0.15);
+    border-color: var(--green-dim);
+  }
+
+  .switch input:checked + .slider::before {
+    transform: translateX(18px);
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  /* ---------- LOG PANEL ---------- */
+  .logpanel {
+    margin-top: 20px;
+    background: linear-gradient(165deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .logpanel-header {
+    font-family: var(--display);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-faint);
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .logpanel-header span.clear {
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .logpanel-header span.clear:hover { color: var(--green); }
+
+  .logpanel-body {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.9;
+    padding: 14px 18px;
+    max-height: 230px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .logpanel-body::-webkit-scrollbar { width: 8px; }
+  .logpanel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .logpanel-body::-webkit-scrollbar-track { background: transparent; }
+
+  .log-line {
+    display: flex;
+    gap: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: slidein 0.3s ease;
+    color: var(--text-dim);
+  }
+
+  @keyframes slidein {
+    from { opacity: 0; transform: translateX(-6px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-ts { color: var(--text-faint); flex-shrink: 0; }
+  .log-tag { flex-shrink: 0; font-weight: 700; }
+  .log-tag.ok   { color: var(--green); }
+  .log-tag.man  { color: var(--blue); }
+  .log-tag.std  { color: var(--amber); }
+  .log-msg { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---------- FOOTER ---------- */
+  .foot {
+    margin-top: 16px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-faint);
+  }
+
+  @media (max-width: 640px) {
+    .status-cluster { width: 100%; justify-content: space-between; }
+    .status-item { align-items: flex-start; }
+    .card-body { flex-direction: column; align-items: flex-start; }
+    .card-meta { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🛫</div>
+      <div>
+        <div class="brand-title">TASKPILOT</div>
+        <div class="brand-sub">FLIGHT DECK // SCHEDULER CONSOLE</div>
+      </div>
+    </div>
+    <div class="status-cluster">
+      <div class="status-item">
+        <span class="status-label">SYSTEM TIME</span>
+        <span class="status-value mono" id="clock">--:--:--</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">SESSION UPTIME</span>
+        <span class="status-value mono" id="uptime">00:00:00</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">STATUS</span>
+        <span class="status-value status-ok"><span class="pulse-dot"></span><span id="armedCount">0</span> ARMED</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid" id="taskGrid"></main>
+
+  <div class="logpanel">
+    <div class="logpanel-header">
+      <span>FLIGHT LOG</span>
+      <span class="clear" id="clearLog">CLEAR ▾</span>
+    </div>
+    <div class="logpanel-body" id="logBody"></div>
+  </div>
+
+  <div class="foot">TASKPILOT v0.1.0 — config: examples/tasks.yaml — все циферблаты считают по настоящему cron-парсеру</div>
+</div>
+
+<script>
+/* =========================================================
+   CRON ENGINE — порт src/taskpilot/cron.py
+   ========================================================= */
+const ALIASES = {
+  "@yearly":  "0 0 1 1 *",
+  "@annually":"0 0 1 1 *",
+  "@monthly": "0 0 1 * *",
+  "@weekly":  "0 0 * * 0",
+  "@daily":   "0 0 * * *",
+  "@midnight":"0 0 * * *",
+  "@hourly":  "0 * * * *",
+};
+
+const FIELD_BOUNDS = [[0,59],[0,23],[1,31],[1,12],[0,6]];
+
+function parseField(field, low, high) {
+  const values = new Set();
+  for (let part of field.split(",")) {
+    part = part.trim();
+    if (!part) throw new Error(`Empty component in cron field: ${field}`);
+    let step = 1, base = part;
+    if (part.includes("/")) {
+      const [b, s] = part.split("/");
+      if (!/^\d+$/.test(s) || Number(s) === 0) throw new Error(`Invalid step: ${part}`);
+      step = Number(s);
+      base = b;
+    }
+    let start, end;
+    if (base === "*") { start = low; end = high; }
+    else if (base.includes("-")) {
+      const [a, b] = base.split("-");
+      if (!/^\d+$/.test(a) || !/^\d+$/.test(b)) throw new Error(`Invalid range: ${part}`);
+      start = Number(a); end = Number(b);
+    } else if (/^\d+$/.test(base)) {
+      start = end = Number(base);
+    } else throw new Error(`Invalid token: ${part}`);
+    if (start > end) throw new Error(`Range start > end: ${part}`);
+    if (start < low || end > high) throw new Error(`Out of bounds (${low}-${high}): ${part}`);
+    for (let v = start; v <= end; v += step) values.add(v);
+  }
+  return values;
+}
+
+function parseCron(expression) {
+  const raw = expression.trim();
+  const normalized = ALIASES[raw.toLowerCase()] || raw;
+  const fields = normalized.split(/\s+/);
+  if (fields.length !== 5) throw new Error(`Expected 5 cron fields, got ${fields.length}: ${expression}`);
+  const [minutes, hours, doms, months, dows] = fields.map((f, i) => parseField(f, FIELD_BOUNDS[i][0], FIELD_BOUNDS[i][1]));
+  return {
+    expression,
+    minutes, hours, doms, months, dows,
+    domRestricted: !(doms.size === 31),
+    dowRestricted: !(dows.size === 7),
+  };
+}
+
+function matches(cron, d) {
+  if (!cron.minutes.has(d.getMinutes())) return false;
+  if (!cron.hours.has(d.getHours())) return false;
+  if (!cron.months.has(d.getMonth() + 1)) return false;
+
+  const dow = d.getDay(); // JS: Sunday=0 — совпадает с cron
+  const domMatch = cron.doms.has(d.getDate());
+  const dowMatch = cron.dows.has(dow);
+
+  if (cron.domRestricted && cron.dowRestricted) return domMatch || dowMatch;
+  return domMatch && dowMatch;
+}
+
+const MAX_SEARCH = 366 * 24 * 60;
+
+function nextAfter(cron, from) {
+  let candidate = new Date(from.getTime() + 60000);
+  candidate.setSeconds(0, 0);
+  for (let i = 0; i < MAX_SEARCH; i++) {
+    if (matches(cron, candidate)) return candidate;
+    candidate = new Date(candidate.getTime() + 60000);
+  }
+  throw new Error(`No matching time within one year for ${cron.expression}`);
+}
+
+function prevBefore(cron, from) {
+  let candidate = new Date(from.getTime() - 60000);
+  candidate.setSeconds(0, 0);
+  for (let i = 0; i < MAX_SEARCH; i++) {
+    if (matches(cron, candidate)) return candidate;
+    candidate = new Date(candidate.getTime() - 60000);
+  }
+  throw new Error(`No matching prior time within one year for ${cron.expression}`);
+}
+
+/* =========================================================
+   TASK DATA — examples/tasks.yaml
+   ========================================================= */
+const TASKS = [
+  {
+    name: "heartbeat",
+    desc: "Простая запись в лог каждые 5 минут — proof of life.",
+    schedule: "*/5 * * * *",
+    action: "log",
+    enabled: true,
+    meta: { "MESSAGE": "TaskPilot is alive" },
+  },
+  {
+    name: "workday-greeting",
+    desc: "Приветствие по будням в 09:00.",
+    schedule: "0 9 * * 1-5",
+    action: "shell",
+    enabled: true,
+    meta: { "CMD": "echo 'Good morning! Time to automate.'" },
+  },
+  {
+    name: "nightly-backup",
+    desc: "Архивация ./data каждую полночь.",
+    schedule: "@daily",
+    action: "shell",
+    enabled: false,
+    meta: { "CMD": "tar czf backup-$(date +%F).tgz ./data" },
+  },
+  {
+    name: "health-check",
+    desc: "Пинг сервиса каждый час, фиксация HTTP-статуса.",
+    schedule: "@hourly",
+    action: "http",
+    enabled: false,
+    meta: { "URL": "https://example.com/health", "METHOD": "GET" },
+  },
+  {
+    name: "notify-webhook",
+    desc: "Отправка heartbeat-пейлоада в вебхук каждые 6 часов.",
+    schedule: "0 */6 * * *",
+    action: "webhook",
+    enabled: false,
+    meta: { "URL": "https://example.com/webhook" },
+  },
+];
+
+const CHIP_CLASS = { log: "chip-log", shell: "chip-shell", http: "chip-http", webhook: "chip-webhook" };
+const R = 52;
+const CIRC = 2 * Math.PI * R;
+
+/* =========================================================
+   STATE + RENDER
+   ========================================================= */
+const startTime = Date.now();
+let logCounter = 0;
+
+function fmtClock(d) {
+  return d.toLocaleTimeString('ru-RU', { hour12: false });
+}
+
+function fmtDuration(ms) {
+  if (ms < 0) ms = 0;
+  let s = Math.floor(ms / 1000);
+  const days = Math.floor(s / 86400); s %= 86400;
+  const h = Math.floor(s / 3600); s %= 3600;
+  const m = Math.floor(s / 60); s %= 60;
+  const pad = n => String(n).padStart(2, '0');
+  if (days > 0) return `${days}д ${pad(h)}:${pad(m)}:${pad(s)}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function fmtAbsolute(d) {
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+const grid = document.getElementById('taskGrid');
+
+TASKS.forEach((task, idx) => {
+  task.cron = parseCron(task.schedule);
+  const now = new Date();
+  if (task.enabled) {
+    task.next = nextAfter(task.cron, now);
+    task.prev = prevBefore(task.cron, now);
+  } else {
+    task.next = null;
+    task.prev = null;
+  }
+
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.dataset.enabled = task.enabled;
+  card.dataset.idx = idx;
+
+  const metaRows = Object.entries(task.meta).map(([k, v]) =>
+    `<div class="meta-row"><span class="meta-key">${k}</span><span class="meta-val mono" title="${escapeHtml(String(v))}">${escapeHtml(String(v))}</span></div>`
+  ).join('');
+
+  card.innerHTML = `
+    <div class="card-head">
+      <span class="led" data-state="${task.enabled ? 'enabled' : 'disabled'}"></span>
+      <h2 class="card-title">${task.name}</h2>
+      <span class="chip ${CHIP_CLASS[task.action]}">${task.action}</span>
+    </div>
+    <p class="card-desc">${task.desc}</p>
+    <div class="card-body">
+      <div class="dial-wrap">
+        <svg class="dial" viewBox="0 0 120 120">
+          <circle class="dial-track" cx="60" cy="60" r="${R}"></circle>
+          <circle class="dial-progress" cx="60" cy="60" r="${R}" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}"></circle>
+        </svg>
+        <div class="dial-center">
+          <div class="dial-time">--:--:--</div>
+          <div class="dial-label">NEXT RUN</div>
+        </div>
+      </div>
+      <div class="card-meta">
+        <div class="meta-row"><span class="meta-key">SCHEDULE</span><span class="meta-val mono">${task.schedule}</span></div>
+        <div class="meta-row"><span class="meta-key">NEXT AT</span><span class="meta-val mono next-at">—</span></div>
+        ${metaRows}
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="btn-run">RUN NOW</button>
+      <label class="switch">
+        <input type="checkbox" ${task.enabled ? 'checked' : ''}>
+        <span class="slider"></span>
+      </label>
+    </div>
+  `;
+
+  grid.appendChild(card);
+});
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* =========================================================
+   LOG
+   ========================================================= */
+const logBody = document.getElementById('logBody');
+
+function pushLog(tag, tagClass, msg) {
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  const ts = fmtClock(new Date());
+  line.innerHTML = `<span class="log-ts">${ts}</span><span class="log-tag ${tagClass}">${tag}</span><span class="log-msg">${escapeHtml(msg)}</span>`;
+  logBody.prepend(line);
+  logCounter++;
+  while (logBody.children.length > 60) logBody.removeChild(logBody.lastChild);
+}
+
+document.getElementById('clearLog').addEventListener('click', () => {
+  logBody.innerHTML = '';
+  pushLog('SYS', 'std', 'flight log очищен');
+});
+
+/* seed */
+pushLog('SYS', 'std', 'TaskPilot console online — конфиг загружен (5 задач, 2 активны)');
+
+/* =========================================================
+   INTERACTIONS
+   ========================================================= */
+grid.querySelectorAll('.card').forEach(card => {
+  const idx = Number(card.dataset.idx);
+  const task = TASKS[idx];
+
+  const runBtn = card.querySelector('.btn-run');
+  runBtn.addEventListener('click', () => {
+    runBtn.classList.add('running');
+    runBtn.textContent = 'RUNNING…';
+    const led = card.querySelector('.led');
+    const prevState = led.dataset.state;
+    led.dataset.state = 'armed';
+    pushLog('MANUAL', 'man', `${task.name} → действие "${task.action}" выполнено вручную (--dry-run)`);
+    setTimeout(() => {
+      runBtn.classList.remove('running');
+      runBtn.textContent = 'RUN NOW';
+      led.dataset.state = prevState;
+    }, 850);
+  });
+
+  const toggle = card.querySelector('.switch input');
+  toggle.addEventListener('change', () => {
+    task.enabled = toggle.checked;
+    card.dataset.enabled = task.enabled;
+    const led = card.querySelector('.led');
+    led.dataset.state = task.enabled ? 'enabled' : 'disabled';
+    if (task.enabled) {
+      const now = new Date();
+      task.next = nextAfter(task.cron, now);
+      task.prev = prevBefore(task.cron, now);
+      pushLog('SYS', 'std', `${task.name} переведена в ARMED — следующий запуск ${fmtAbsolute(task.next)}`);
+    } else {
+      task.next = null;
+      task.prev = null;
+      pushLog('SYS', 'std', `${task.name} переведена в STANDBY`);
+    }
+    refreshArmedCount();
+  });
+});
+
+function refreshArmedCount() {
+  document.getElementById('armedCount').textContent = TASKS.filter(t => t.enabled).length;
+}
+refreshArmedCount();
+
+/* =========================================================
+   TICK LOOP
+   ========================================================= */
+function tick() {
+  const now = new Date();
+
+  document.getElementById('clock').textContent = fmtClock(now);
+  document.getElementById('uptime').textContent = fmtDuration(now.getTime() - startTime);
+
+  grid.querySelectorAll('.card').forEach(card => {
+    const idx = Number(card.dataset.idx);
+    const task = TASKS[idx];
+    const dialTime = card.querySelector('.dial-time');
+    const dialProgress = card.querySelector('.dial-progress');
+    const nextAt = card.querySelector('.next-at');
+
+    if (!task.enabled) {
+      dialTime.textContent = 'STANDBY';
+      dialProgress.style.strokeDashoffset = CIRC;
+      nextAt.textContent = '—';
+      return;
+    }
+
+    if (now >= task.next) {
+      pushLog('AUTO', 'ok', `${task.name} → авто-запуск по расписанию "${task.schedule}"`);
+      task.prev = task.next;
+      task.next = nextAfter(task.cron, now);
+    }
+
+    const remaining = task.next.getTime() - now.getTime();
+    dialTime.textContent = fmtDuration(remaining);
+    nextAt.textContent = fmtAbsolute(task.next);
+
+    const total = task.next.getTime() - task.prev.getTime();
+    const elapsed = now.getTime() - task.prev.getTime();
+    const frac = total > 0 ? Math.min(Math.max(elapsed / total, 0), 1) : 0;
+    dialProgress.style.strokeDashoffset = String(CIRC * (1 - frac));
+
+    const led = card.querySelector('.led');
+    if (remaining <= 5000 && led.dataset.state !== 'armed') {
+      led.dataset.state = 'armed';
+    } else if (remaining > 5000 && led.dataset.state === 'armed') {
+      led.dataset.state = 'enabled';
+    }
+  });
+}
+
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
