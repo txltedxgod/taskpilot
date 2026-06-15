@@ -15,6 +15,25 @@ extend in minutes.
 
 ---
 
+## 🛰️ Live demo — Flight Deck
+
+A self-contained dashboard that visualizes the example schedule in
+[`examples/tasks.yaml`](examples/tasks.yaml): live countdown dials for the
+next run of every task, an arm/standby toggle, a manual "run now" trigger and
+a scrolling flight log.
+
+➡️ **[Open the Flight Deck demo](https://txltedxgod.github.io/taskpilot/dashboard.html)**
+*(enable GitHub Pages on the `main` branch, `/docs` folder, to make this link live)*
+
+Or run it locally — no build step, just open the file:
+
+```bash
+open docs/dashboard.html      # macOS
+start docs\dashboard.html     # Windows
+```
+
+---
+
 ## ✨ Features
 
 - **Real cron expressions** — `*`, ranges (`1-5`), lists (`1,3,5`), steps
