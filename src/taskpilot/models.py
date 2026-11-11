@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from taskpilot.cron import CronSchedule
 
@@ -25,7 +25,7 @@ class Task:
     enabled: bool = True
     description: str = ""
 
-    def next_run(self, after: Optional[datetime] = None) -> datetime:
+    def next_run(self, after: datetime | None = None) -> datetime:
         """Return the next scheduled run time strictly after *after*."""
         return self.schedule.next_after(after or datetime.now())
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional
 
 from taskpilot.actions.base import ActionContext, ActionRegistry
 from taskpilot.actions.base import registry as default_registry
@@ -18,10 +17,10 @@ class TaskRunner:
 
     def __init__(
         self,
-        registry: Optional[ActionRegistry] = None,
+        registry: ActionRegistry | None = None,
         *,
         dry_run: bool = False,
-        env: Optional[dict[str, str]] = None,
+        env: dict[str, str] | None = None,
     ) -> None:
         self.registry = registry or default_registry
         self.dry_run = dry_run

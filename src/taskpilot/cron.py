@@ -98,7 +98,7 @@ class CronSchedule:
     days_of_week: frozenset[int]
 
     @classmethod
-    def parse(cls, expression: str) -> "CronSchedule":
+    def parse(cls, expression: str) -> CronSchedule:
         raw = expression.strip()
         if not raw:
             raise CronError("Cron expression must not be empty")
@@ -112,7 +112,7 @@ class CronSchedule:
 
         parsed = [
             _parse_field(field, low, high)
-            for field, (low, high) in zip(fields, _FIELD_BOUNDS)
+            for field, (low, high) in zip(fields, _FIELD_BOUNDS, strict=True)
         ]
         return cls(expression, *parsed)
 

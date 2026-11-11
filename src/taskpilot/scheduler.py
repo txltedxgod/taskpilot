@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Callable, Iterable, Optional
 
 from taskpilot.models import Task, TaskResult
 from taskpilot.runner import TaskRunner
@@ -24,12 +24,12 @@ class Scheduler:
     def __init__(
         self,
         tasks: Iterable[Task],
-        runner: Optional[TaskRunner] = None,
+        runner: TaskRunner | None = None,
     ) -> None:
         self.tasks: list[Task] = list(tasks)
         self.runner = runner or TaskRunner()
 
-    def run_pending(self, moment: Optional[datetime] = None) -> list[TaskResult]:
+    def run_pending(self, moment: datetime | None = None) -> list[TaskResult]:
         """Run every enabled task whose schedule matches *moment*."""
         moment = (moment or datetime.now()).replace(second=0, microsecond=0)
         results: list[TaskResult] = []
@@ -44,8 +44,8 @@ class Scheduler:
         self,
         *,
         poll_seconds: float = 60.0,
-        max_iterations: Optional[int] = None,
-        on_result: Optional[Callable[[TaskResult], None]] = None,
+        max_iterations: int | None = None,
+        on_result: Callable[[TaskResult], None] | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         """Continuously poll and run due tasks.
@@ -55,7 +55,7 @@ class Scheduler:
         """
         logger.info("Scheduler starting with %d task(s)", len(self.tasks))
         iteration = 0
-        last_minute: Optional[datetime] = None
+        last_minute: datetime | None = None
         try:
             while max_iterations is None or iteration < max_iterations:
                 now = datetime.now().replace(second=0, microsecond=0)
@@ -70,7 +70,7 @@ class Scheduler:
         except KeyboardInterrupt:  # pragma: no cover - interactive only
             logger.info("Scheduler stopped by user")
 
-    def describe(self, after: Optional[datetime] = None) -> list[dict]:
+    def describe(self, after: datetime | None = None) -> list[dict]:
         """Return a serialisable summary of upcoming runs."""
         after = after or datetime.now()
         rows = []

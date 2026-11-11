@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict
+from typing import Any
 
 
 @dataclass
@@ -12,7 +13,7 @@ class ActionContext:
 
     task_name: str
     dry_run: bool = False
-    env: Dict[str, str] = field(default_factory=dict)
+    env: dict[str, str] = field(default_factory=dict)
 
 
 # An action is any callable taking (context, **params) and returning a str.
@@ -23,7 +24,7 @@ class ActionRegistry:
     """Maps action names to callables."""
 
     def __init__(self) -> None:
-        self._actions: Dict[str, Action] = {}
+        self._actions: dict[str, Action] = {}
 
     def register(self, name: str, action: Action | None = None):
         """Register an action. Usable directly or as a decorator."""
@@ -49,7 +50,7 @@ class ActionRegistry:
     def names(self) -> list[str]:
         return sorted(self._actions)
 
-    def run(self, name: str, context: ActionContext, params: Dict[str, Any]) -> str:
+    def run(self, name: str, context: ActionContext, params: dict[str, Any]) -> str:
         return self.get(name)(context, **params)
 
 
