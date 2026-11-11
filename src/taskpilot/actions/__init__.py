@@ -7,7 +7,7 @@ it did (used for logging/results).
 
 from __future__ import annotations
 
-from taskpilot.actions.base import Action, ActionContext, registry
 from taskpilot.actions import builtins as _builtins  # noqa: F401  (registers actions)
+from taskpilot.actions.base import Action, ActionContext, registry
 
 __all__ = ["Action", "ActionContext", "registry"]

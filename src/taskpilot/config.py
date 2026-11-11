@@ -20,14 +20,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import yaml
 
 from taskpilot.cron import CronSchedule
 from taskpilot.models import Task
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 
 
 class ConfigError(ValueError):

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A lightweight, dependency-friendly automation & task-scheduling toolkit with cron schedules, pluggable actions, and a clean CLI."
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [{ name = "Seidou Takidzava" }]
 keywords = ["automation", "scheduler", "cron", "cli", "tasks", "jobs"]
 classifiers = [
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -54,14 +53,14 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_unused_ignores = true
 ignore_missing_imports = true
 files = ["src"]

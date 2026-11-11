@@ -14,7 +14,7 @@ import argparse
 import json
 import logging
 import sys
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from taskpilot import __version__
 from taskpilot.actions.base import registry
@@ -61,7 +61,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     _configure_logging(getattr(args, "verbose", False))

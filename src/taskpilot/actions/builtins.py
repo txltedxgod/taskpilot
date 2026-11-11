@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import subprocess
 import urllib.request
-from typing import Any, Optional
+from typing import Any
 
 from taskpilot.actions.base import ActionContext, registry
 
@@ -28,7 +28,7 @@ def log_action(context: ActionContext, message: str = "", **_: Any) -> str:
 def shell_action(
     context: ActionContext,
     command: str,
-    timeout: Optional[float] = 60.0,
+    timeout: float | None = 60.0,
     check: bool = True,
     **_: Any,
 ) -> str:
@@ -57,7 +57,7 @@ def http_action(
     context: ActionContext,
     url: str,
     method: str = "GET",
-    headers: Optional[dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     body: Any = None,
     timeout: float = 30.0,
     **_: Any,
@@ -66,7 +66,7 @@ def http_action(
     if context.dry_run:
         return f"[dry-run] would {method} {url}"
 
-    data: Optional[bytes] = None
+    data: bytes | None = None
     request_headers = dict(headers or {})
     if body is not None:
         if isinstance(body, (dict, list)):
@@ -87,7 +87,7 @@ def http_action(
 def webhook_action(
     context: ActionContext,
     url: str,
-    payload: Optional[dict[str, Any]] = None,
+    payload: dict[str, Any] | None = None,
     **_: Any,
 ) -> str:
     """POST a JSON *payload* to *url*. Handy for Slack/Telegram webhooks."""
